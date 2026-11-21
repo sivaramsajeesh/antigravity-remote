@@ -210,6 +210,7 @@ async def get_status():
     """Return current agent status and connection count."""
     return JSONResponse({
         "agent_active": agent_manager.is_active,
+        "status_message": agent_manager.status_message,
         "connections": len(active_connections),
     })
 
