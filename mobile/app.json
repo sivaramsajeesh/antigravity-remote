@@ -4,17 +4,12 @@
     "slug": "antigravity-remote",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "antigravity-remote",
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0a0e1a"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.antigravity.remote",
@@ -23,22 +18,11 @@
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0a0e1a"
-      },
       "package": "com.antigravity.remote",
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-haptics",
-      "expo-clipboard"
-    ]
+    }
   }
 }
