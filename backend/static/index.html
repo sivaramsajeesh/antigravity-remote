@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Antigravity Remote Control</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>" />
+  <!-- Inter font for a clean, modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== Header ===== -->
+  <header class="header">
+    <div class="header__brand">
+      <span class="emoji">🚀</span>
+      Antigravity Remote
+    </div>
+    <div class="header__status">
+      <span id="agent-label" style="color:var(--text-muted)">Agent Inactive</span>
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-label">Disconnected</span>
+    </div>
+  </header>
+
+  <!-- ===== Chat Messages ===== -->
+  <main class="chat" id="chat">
+    <!-- messages are injected here by app.js -->
+  </main>
+
+  <!-- ===== Typing Indicator ===== -->
+  <div class="typing-indicator" id="typing-indicator">
+    <span class="dot"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  </div>
+
+  <!-- ===== Input Bar ===== -->
+  <div class="input-bar">
+    <input
+      id="msg-input"
+      class="input-bar__field"
+      type="text"
+      placeholder="Send a message…"
+      autocomplete="off"
+    />
+    <button id="send-btn" class="input-bar__send" aria-label="Send message">
+      &#9654;
+    </button>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

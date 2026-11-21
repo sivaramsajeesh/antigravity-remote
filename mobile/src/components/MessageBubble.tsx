@@ -1,0 +1,318 @@
+/**
+ * MessageBubble – Renders a single chat message
+ *
+ * Visual styles differ by role:
+ *  • user      → right-aligned, blue-purple gradient
+ *  • assistant → left-aligned, dark translucent glass
+ *  • system    → centered, small italic text
+ *
+ * Features:
+ *  - Markdown rendering for assistant messages
+ *  - Streaming cursor animation (blinking "▌")
+ *  - Long-press to copy content
+ *  - Fade-in entrance animation
+ */
+
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Markdown from 'react-native-markdown-display';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+
+import { Message } from '../types';
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface MessageBubbleProps {
+  message: Message;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  // ---- Fade-in animation ----
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(12)).current;
+
+  // ---- Blinking cursor for streaming ----
+  const cursorOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
+  useEffect(() => {
+    if (message.isStreaming) {
+      const blink = Animated.loop(
+        Animated.sequence([
+          Animated.timing(cursorOpacity, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(cursorOpacity, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      blink.start();
+      return () => blink.stop();
+    } else {
+      cursorOpacity.setValue(1);
+    }
+  }, [message.isStreaming, cursorOpacity]);
+
+  // ---- Long-press to copy ----
+  const handleLongPress = async () => {
+    await Clipboard.setStringAsync(message.content);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  // ---- Format timestamp ----
+  const formattedTime = React.useMemo(() => {
+    try {
+      const date = new Date(message.timestamp);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  }, [message.timestamp]);
+
+  // ---- System messages ----
+  if (message.role === 'system') {
+    return (
+      <Animated.View
+        style={[
+          styles.systemContainer,
+          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+        ]}
+      >
+        <Text style={styles.systemText}>{message.content}</Text>
+      </Animated.View>
+    );
+  }
+
+  const isUser = message.role === 'user';
+
+  return (
+    <Animated.View
+      style={[
+        styles.row,
+        isUser ? styles.rowUser : styles.rowAssistant,
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+      ]}
+    >
+      <Pressable
+        onLongPress={handleLongPress}
+        delayLongPress={400}
+        style={[
+          styles.bubble,
+          isUser ? styles.bubbleUser : styles.bubbleAssistant,
+        ]}
+      >
+        {/* Content */}
+        {isUser ? (
+          <Text style={styles.userText}>{message.content}</Text>
+        ) : (
+          <View style={styles.markdownWrap}>
+            <Markdown style={markdownStyles}>{message.content}</Markdown>
+            {/* Blinking cursor while streaming */}
+            {message.isStreaming && (
+              <Animated.Text
+                style={[styles.cursor, { opacity: cursorOpacity }]}
+              >
+                ▌
+              </Animated.Text>
+            )}
+          </View>
+        )}
+
+        {/* Timestamp */}
+        <Text
+          style={[
+            styles.timestamp,
+            isUser ? styles.timestampUser : styles.timestampAssistant,
+          ]}
+        >
+          {formattedTime}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+};
+
+export default React.memo(MessageBubble);
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+  row: {
+    paddingHorizontal: 12,
+    marginVertical: 4,
+    flexDirection: 'row',
+  },
+  rowUser: {
+    justifyContent: 'flex-end',
+  },
+  rowAssistant: {
+    justifyContent: 'flex-start',
+  },
+
+  bubble: {
+    maxWidth: '82%',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 18,
+  },
+  bubbleUser: {
+    backgroundColor: '#4f46e5',
+    borderBottomRightRadius: 4,
+  },
+  bubbleAssistant: {
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderBottomLeftRadius: 4,
+  },
+
+  userText: {
+    color: '#ffffff',
+    fontSize: 15,
+    lineHeight: 21,
+  },
+
+  markdownWrap: {
+    flexDirection: 'column',
+  },
+  cursor: {
+    color: '#a78bfa',
+    fontSize: 16,
+    marginTop: -4,
+  },
+
+  timestamp: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+  timestampUser: {
+    color: 'rgba(255, 255, 255, 0.55)',
+    textAlign: 'right',
+  },
+  timestampAssistant: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    textAlign: 'left',
+  },
+
+  // ---- System messages ----
+  systemContainer: {
+    alignItems: 'center',
+    marginVertical: 8,
+    paddingHorizontal: 24,
+  },
+  systemText: {
+    color: 'rgba(255, 255, 255, 0.40)',
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+});
+
+// Markdown stylesheet (deep partial of TextStyle keyed by node type)
+const markdownStyles = StyleSheet.create({
+  body: {
+    color: '#e2e8f0',
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  heading1: {
+    color: '#f1f5f9',
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  heading2: {
+    color: '#f1f5f9',
+    fontSize: 18,
+    fontWeight: '600' as const,
+    marginBottom: 4,
+  },
+  heading3: {
+    color: '#f1f5f9',
+    fontSize: 16,
+    fontWeight: '600' as const,
+    marginBottom: 2,
+  },
+  code_inline: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    color: '#a78bfa',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    fontSize: 13,
+    fontFamily: 'monospace',
+  },
+  code_block: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    color: '#e2e8f0',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 13,
+    fontFamily: 'monospace',
+  },
+  fence: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    color: '#e2e8f0',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 13,
+    fontFamily: 'monospace',
+  },
+  link: {
+    color: '#818cf8',
+    textDecorationLine: 'underline' as const,
+  },
+  strong: {
+    color: '#f1f5f9',
+    fontWeight: '700' as const,
+  },
+  em: {
+    color: '#cbd5e1',
+    fontStyle: 'italic' as const,
+  },
+  blockquote: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#6366f1',
+    paddingLeft: 10,
+    marginVertical: 4,
+  },
+  list_item: {
+    color: '#e2e8f0',
+    fontSize: 15,
+  },
+});
