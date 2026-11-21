@@ -7,7 +7,7 @@
  *  • system    → centered, small italic text
  *
  * Features:
- *  - Markdown rendering for assistant messages
+ *  - Lightweight native Markdown rendering (zero external dependencies)
  *  - Streaming cursor animation (blinking "▌")
  *  - Long-press to copy content
  *  - Fade-in entrance animation
@@ -21,10 +21,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import Markdown from 'react-native-markdown-display';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 
+import { SimpleMarkdown } from './SimpleMarkdown';
 import { Message } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -139,7 +139,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <Text style={styles.userText}>{message.content}</Text>
         ) : (
           <View style={styles.markdownWrap}>
-            <Markdown style={markdownStyles}>{message.content}</Markdown>
+            <SimpleMarkdown content={message.content} />
             {/* Blinking cursor while streaming */}
             {message.isStreaming && (
               <Animated.Text
@@ -240,79 +240,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     textAlign: 'center',
-  },
-});
-
-// Markdown stylesheet (deep partial of TextStyle keyed by node type)
-const markdownStyles = StyleSheet.create({
-  body: {
-    color: '#e2e8f0',
-    fontSize: 15,
-    lineHeight: 21,
-  },
-  heading1: {
-    color: '#f1f5f9',
-    fontSize: 20,
-    fontWeight: '700' as const,
-    marginBottom: 4,
-  },
-  heading2: {
-    color: '#f1f5f9',
-    fontSize: 18,
-    fontWeight: '600' as const,
-    marginBottom: 4,
-  },
-  heading3: {
-    color: '#f1f5f9',
-    fontSize: 16,
-    fontWeight: '600' as const,
-    marginBottom: 2,
-  },
-  code_inline: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    color: '#a78bfa',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    fontSize: 13,
-    fontFamily: 'monospace',
-  },
-  code_block: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    color: '#e2e8f0',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 13,
-    fontFamily: 'monospace',
-  },
-  fence: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    color: '#e2e8f0',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 13,
-    fontFamily: 'monospace',
-  },
-  link: {
-    color: '#818cf8',
-    textDecorationLine: 'underline' as const,
-  },
-  strong: {
-    color: '#f1f5f9',
-    fontWeight: '700' as const,
-  },
-  em: {
-    color: '#cbd5e1',
-    fontStyle: 'italic' as const,
-  },
-  blockquote: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderLeftWidth: 3,
-    borderLeftColor: '#6366f1',
-    paddingLeft: 10,
-    marginVertical: 4,
-  },
-  list_item: {
-    color: '#e2e8f0',
-    fontSize: 15,
   },
 });
